@@ -1,0 +1,30 @@
+# ============================================================
+# Common Ansible configuration for all hosts
+# ============================================================
+ansible_connection: ssh
+ansible_user: "{{ lookup('env', 'ANSIBLE_SSH_USER') | mandatory }}"
+ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY') | mandatory }}"
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+ansible_python_interpreter: /usr/bin/python3
+
+# ============================================================
+# SSH users configuration
+# These users will be created, allowed to SSH, and granted sudo
+# ============================================================
+ssh_users:
+  - name: haole
+    ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7WwmzFmvUw5A4BUFHhgabMtijZCh1eK9ZPvzWXD4lxi8M/XKC3bf+6qztx4kDcxZAFSAORJfp6KytjfGIyaWTcdGVh71mPnSG8cYWgdA4bAEmfXgj/pp1qj38UhjAAQDk6vXWHGgd6GerYkK32WopF3IEsZlswvOSIY5llCm95KcekE5QXagoH7spVy7JWCjwhoZQ8uAJlACGiu7CQakwZvv9ChHg4DtcMwSgsHJpbfSPOdp95Of/DF/9wBVjHO40Zh80xCD9bGSHX9fEKsf8sHHD3pN7gV5dq/dWJWooLjqlFWNjHNnMMkw/mFPpHNoGVmJQpzlpjXzC9j3PAhlIWEBet1eQ21Iuu+ouDkll9jlu3/Un+PYaMRii2dwU3INa8mVKrrZLCdvcFNLzD5Y3TsDZJ50d+24dnz0iVOpV2vdS3khQSWubtWoy65cWHVA8ld4zWBG+liwxhaSEQKxYveGA5eQGMzmrnWffSEodUHPrIngKwU2B7yxrcjqvjDE= haole@Haos-MBP-2
+
+# ============================================================
+# Docker authentication
+# Store sensitive credentials in Ansible Vault or environment vars
+# ============================================================
+docker_username: thienhaole92
+docker_access_token: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  62363165643735616266633465323231656138373237613962643261343230313965656331363932
+  6364626631343739336661363065623339613365636330340a656665386561626439306434396530
+  33653231306333383434643131396661346434636631623166646234343732633463663530623134
+  3263333433626332300a393963643664343964366665336536656637396331346133366266616463
+  34636434383466376337663637396166396531393933656562653531333939323232653132393266
+  3363343339633663376564363437343038326539363232626166

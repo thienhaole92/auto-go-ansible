@@ -1,0 +1,5 @@
+#SPDX-License-Identifier: MIT-0
+---
+deploy_user: deployer
+docker_dir: /opt/docker
+fetch_deploy_user_private_key: false

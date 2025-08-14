@@ -1,0 +1,88 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Create deployment user and generate secure SSH key
+  user:
+    name: "{{ deploy_user }}"
+    shell: /bin/bash
+    create_home: yes
+    generate_ssh_key: yes
+    ssh_key_type: ed25519
+    ssh_key_bits: 256
+    ssh_key_file: .ssh/id_ed25519
+  become: true
+  register: user_created
+
+- name: Create Docker root directory with correct permissions
+  file:
+    path: "{{ docker_dir }}"
+    state: directory
+    mode: "0770"
+    owner: root
+    group: "{{ deploy_user }}"
+  become: true
+
+- name: Add deployment user to Docker group
+  user:
+    name: "{{ deploy_user }}"
+    groups: docker
+    append: yes
+  become: true
+  notify:
+    - Reload user groups
+
+- name: Grant deployment user passwordless Docker Compose execution
+  community.general.sudoers:
+    name: allow-deployer-docker-compose
+    user: "{{ deploy_user }}"
+    commands: "/usr/bin/docker compose up -d --force-recreate*"
+    nopassword: true
+
+- name: Create docker-compose.yml from template
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+
+- name: Check for existing Docker Compose .env file
+  ansible.builtin.stat:
+    path: "{{ docker_dir }}/.env"
+  register: env_file_stat
+
+- name: Create Docker Compose .env file from template if missing
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ docker_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+    backup: true
+  when: not env_file_stat.stat.exists
+
+- name: Retrieve deployment user's generated SSH public key from remote host
+  ansible.builtin.slurp:
+    src: "/home/{{ deploy_user }}/.ssh/id_ed25519.pub"
+  register: deploy_user_pubkey
+
+- name: Install generated SSH public key into deployment user's authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ deploy_user }}"
+    state: present
+    key: "{{ deploy_user_pubkey.content | b64decode }}"
+
+- name: Read generated private SSH key from remote host
+  ansible.builtin.slurp:
+    src: "/home/{{ deploy_user }}/.ssh/id_ed25519"
+  register: deploy_user_private_key
+  become: true
+  when: fetch_deploy_user_private_key | bool
+
+- name: Save private key to a local file (control node)
+  ansible.builtin.copy:
+    content: "{{ deploy_user_private_key.content | b64decode }}"
+    dest: "./deploy_user_id_ed25519"
+    mode: "0600"
+  delegate_to: localhost
+  when: fetch_deploy_user_private_key | bool

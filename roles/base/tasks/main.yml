@@ -1,0 +1,41 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Install common system tools on Ubuntu
+  apt:
+    name:
+      - sysstat
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: true
+  become: true
+
+- name: Enable sysstat data collection
+  lineinfile:
+    path: /etc/default/sysstat
+    regexp: "^ENABLED="
+    line: 'ENABLED="true"'
+    create: no
+    backup: yes
+  become: true
+
+- name: Restart sysstat
+  service:
+    name: sysstat
+    state: restarted
+    enabled: true
+  become: true
+
+- name: Ensure locale exists
+  ansible.builtin.locale_gen:
+    name: en_US.UTF-8
+    state: present
+  become: true
+
+- name: Set timezone to UTC
+  ansible.builtin.timezone:
+    name: Etc/UTC
+  become: true

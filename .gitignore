@@ -53,3 +53,6 @@ MANIFEST
 .conda*/
 .python-version
 src/ansible_sign/_version.py
+
+# Environments
+.env

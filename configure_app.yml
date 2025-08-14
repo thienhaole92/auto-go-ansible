@@ -1,0 +1,5 @@
+---
+- hosts: app
+  tasks:
+    - import_role:
+        name: app

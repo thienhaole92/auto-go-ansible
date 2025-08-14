@@ -1,0 +1,82 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Remove any old Docker GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/docker.gpg
+    state: absent
+  become: true
+
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Download Docker GPG key and convert to proper format
+  ansible.builtin.shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+  become: true
+
+- name: Set correct permissions on GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/docker.gpg
+    mode: "0644"
+  become: true
+
+- name: Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker.list
+  become: true
+
+- name: Install Docker Engine and Docker Compose Plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Deploy Docker daemon configuration
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+    backup: yes
+  become: true
+  notify: Restart Docker
+
+- name: Attempt module login first
+  community.docker.docker_login:
+    username: "{{ docker_username }}"
+    password: "{{ docker_access_token }}"
+    reauthorize: true
+    debug: true
+  when:
+    - docker_username is defined
+    - docker_access_token is defined
+  ignore_errors: yes
+  register: module_login
+  no_log: false
+
+- name: Fallback to CLI login if module failed
+  ansible.builtin.command:
+    cmd: "docker login -u {{ docker_username }} --password-stdin"
+    stdin: "{{ docker_access_token }}"
+  when:
+    - docker_username is defined
+    - docker_access_token is defined
+    - module_login is failed
+  register: cli_login
+  changed_when: "'Login Succeeded' in cli_login.stdout"
+  no_log: true

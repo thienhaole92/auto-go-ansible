@@ -1,0 +1,42 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Ensure sudo package is installed
+  apt:
+    name: sudo
+    state: present
+    update_cache: yes
+
+- name: Ensure specified users are in the sudo group
+  user:
+    name: "{{ item.name }}"
+    groups: sudo
+    append: true
+  loop: "{{ ssh_users }}"
+  when: ssh_users is defined
+
+- name: Ensure SSH users exist
+  user:
+    name: "{{ item.name }}"
+    shell: /bin/bash
+    state: present
+    create_home: true
+    groups: sudo
+    append: true
+  loop: "{{ ssh_users }}"
+
+- name: Add authorized keys for SSH users
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_key }}"
+    state: present
+  loop: "{{ ssh_users }}"
+
+- name: Allow SSH users passwordless sudo
+  copy:
+    dest: "/etc/sudoers.d/{{ item.name }}"
+    content: "{{ item.name }} ALL=(ALL) NOPASSWD:ALL"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  loop: "{{ ssh_users }}"
