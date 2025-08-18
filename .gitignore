@@ -56,3 +56,6 @@ src/ansible_sign/_version.py
 
 # Environments
 .env
+
+# PEM
+deploy_user_id_ed25519

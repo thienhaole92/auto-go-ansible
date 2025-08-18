@@ -2,4 +2,4 @@
 ---
 deploy_user: deployer
 docker_dir: /opt/docker
-fetch_deploy_user_private_key: false
+fetch_deploy_user_private_key: true

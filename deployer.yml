@@ -2,4 +2,4 @@
 - hosts: app
   tasks:
     - import_role:
-        name: app
+        name: deployer

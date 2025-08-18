@@ -7,7 +7,7 @@ An Ansible automation toolkit for quickly setting up a production-ready Ubuntu h
 ## 🛠 Features
 
 - **System Setup** – Install common system tools, Docker Engine, and Docker Compose Plugin (`host_base.yml`)
-- **Application Deployment** – Create a deployment user with secure SSH keys, generate `docker-compose.yml` from a template, check for existing `.env` files (`configure_app.yml`)
+- **Application Deployment** – Creates secure deployment user, generates Docker configs, and preserves environment files for CI/CD (`deployer.yml`)
 - **User & SSH Configuration** – Add authorized keys, enable passwordless sudo for SSH users (`user_ssh.yml`)
 
 ## 🛠️ Prerequisites
@@ -57,11 +57,11 @@ ansible-playbook playbook.yml \
 
 ## 📂 Playbook Reference
 
-| Playbook            | Purpose                                                    |
-| ------------------- | ---------------------------------------------------------- |
-| `host_base.yml`     | Install system tools, Docker Engine, Docker Compose Plugin |
-| `configure_app.yml` | Create deployment user, generate `docker-compose.yml`      |
-| `user_ssh.yml`      | Configure SSH access and passwordless sudo                 |
+| Playbook        | Purpose                                                    |
+| --------------- | ---------------------------------------------------------- |
+| `host_base.yml` | Install system tools, Docker Engine, Docker Compose Plugin |
+| `deployer.yml`  | Create deployment user for CI/CD app deployments           |
+| `user_ssh.yml`  | Configure SSH access and passwordless sudo                 |
 
 ## 📌 Notes
 
